@@ -1,0 +1,40 @@
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+from tensorflow.examples.tutorials.mnist import input_data
+
+mnist = input_data.read_data_sets('MNIST_data/', one_hot=True)
+
+# 输入特征占位
+x = tf.placeholder('float', [None, 784]) # Input placeholder
+
+# 权重和偏置值
+W = tf.Variable(tf.zeros([784, 10])) #weight , with a variable of 784 rows and 10 collumns matrix
+b = tf.Variable(tf.zeros([10])) #Bias, with a variable of a list of size 10
+
+# 预测值
+y = tf.nn.softmax(tf.matmul(x, W) + b) # linear regression
+
+# 标签占位
+y_ = tf.placeholder('float', [None, 10]) # Output placeholder
+
+# 计算损失函数
+cross_entropy = -tf.reduce_sum(y_ * tf.log(y))
+
+# 梯度下降
+train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
+
+# 初始化所有变量
+init = tf.global_variables_initializer()
+
+with tf.Session() as sess:
+    sess.run(init)
+
+    # 开始训练模型
+    for _ in range(1000):
+        batch_xs, batch_ys = mnist.train.next_batch(100)
+        sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+
+    # 评估模型效果
+    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
+    print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
